@@ -11,7 +11,6 @@ class Book {
 //UI constructor
 class UI {
   addBookToList(book) {
-    console.log(book.title.length);
     const list = document.getElementById("book-list"),
       row = document.createElement("tr");
     row.innerHTML = `<td>${book.title}</td>
@@ -43,6 +42,41 @@ class UI {
   }
 }
 
+//local storage
+class Store {
+  static getBooks() {
+    let books;
+    if (localStorage.getItem("books") === null) {
+      books = [];
+    } else {
+      books = JSON.parse(localStorage.getItem("books"));
+    }
+    return books;
+  }
+  static displayBooks() {
+    const books = Store.getBooks();
+    books.forEach(function(book) {
+      const ui = new UI();
+      ui.addBookToList(book);
+    });
+  }
+
+  static addBook(book) {
+    const books = Store.getBooks();
+    books.push(book);
+    localStorage.setItem("books", JSON.stringify(books));
+  }
+  static removeBook(isbn) {
+    const books = Store.getBooks();
+    books.forEach(function(book, index) {
+      if (book.isbn == isbn) {
+        books.splice(index, 1);
+      }
+    });
+    localStorage.setItem("books", JSON.stringify(books));
+  }
+}
+document.addEventListener("DOMContentLoaded", Store.displayBooks);
 // event for add book
 document.getElementById("book-form").addEventListener("submit", function(e) {
   const title = document.getElementById("title").value,
@@ -56,6 +90,8 @@ document.getElementById("book-form").addEventListener("submit", function(e) {
     ui.showAlert("Please insert all values", "error");
   } else {
     ui.addBookToList(book);
+    //add to local storage
+    Store.addBook(book);
     ui.clearfields();
     ui.showAlert("Book Added", "success");
   }
@@ -67,6 +103,8 @@ document.getElementById("book-form").addEventListener("submit", function(e) {
 document.querySelector("#book-list").addEventListener("click", function(e) {
   const ui = new UI();
   ui.deleteBook(e.target);
+  // remove from local starage by getting the isbn number
+  Store.removeBook(e.target.parentElement.previousElementSibling.textContent);
   ui.showAlert("Book Deleted", "success");
   e.preventDefault();
 });
